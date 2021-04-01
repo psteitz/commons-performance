@@ -1,0 +1,259 @@
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~ Licensed to the Apache Software Foundation (ASF) under one or more
+~~ contributor license agreements.  See the NOTICE file distributed with
+~~ this work for additional information regarding copyright ownership.
+~~ The ASF licenses this file to You under the Apache License, Version 2.0
+~~ (the "License"); you may not use this file except in compliance with
+~~ the License.  You may obtain a copy of the License at
+~~
+~~    http://www.apache.org/licenses/LICENSE-2.0
+~~
+~~ Unless required by applicable law or agreed to in writing, software
+~~ distributed under the License is distributed on an "AS IS" BASIS,
+~~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+~~ See the License for the specific mathuage governing permissions and
+~~ limitations under the License.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ -----
+ Apache Commons Performance
+ -----
+ Apache Commons team
+ -----
+ August 2007
+ 
+Overview
+
+ Commons performance is a small framework for developing configurable 
+ microbenchmark clients. The "framework" consists of two abstract
+ classes, "ClientThread" and "LoadGenerator."  ClientThreads generate
+ requests with configurable inter-arrival times (following various load
+ generation profiles) and gather response time statistics. LoadGenerators
+ spawn ClientThreads and aggregate statistics across threads. Configuration
+ is loaded at the beginning of a run from an XML configuration file.
+
+ Concrete implementations are provided for commons pool and commons DBCP. A
+ primitive http load generator is also included as another sample LoadGenerator.
+ See the class javadoc for 
+ {{{./apidocs/org/apache/commons/performance/ClientThread.html}ClientThread}}
+ and 
+ {{{./apidocs/org/apache/commons/performance/LoadGenerator.html}LoadGenerator}}
+ for more information on how to extend these classes to develop other
+ microbenchmark clients.  The Pool, DBCP, and HTTP implementations (in the 
+ {{{./apidocs/org/apache/commons/performance/pool/package-summary.html}pool}},
+ {{{./apidocs/org/apache/commons/performance/dbcp/package-summary.html}dbcp}}
+ {{{./apidocs/org/apache/commons/performance/http/package-summary.html}http}}
+ packages, respectively) provide examples of how to do this.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~ When DOXIA-47 is resolved, anchor names and {} around section titles
+~~ may break / be unnecessary
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+ {{{#Compiling and running the DBCP, pool and http tests}Pool, DBCP and http tests}} | 
+ {{{#Configuration}Configuration}} | {{{#Statistics}Statistics}} |
+ {{{#Development tasks}Development tasks}}
+
+{Compiling and running the DBCP, pool and http tests}
+
+ [DBCP] To run the dbcp tests:
+
+ [[1]] Edit the configuration in src/dbcp/config-dbcp.xml
+
+ [[2]] Make sure the configured database is running and accepting connections
+
+ [[3]] Specify the path to the jdbc driver jar and the dbcp and pool jars
+ you want to test with in src/dbcp/build.properties 
+
+ [[4]] Edit src/dbcp/logging.properties to provide a real path for the log file
+
+ [[5]] From src/dbcp, execute:
+
++---------------------
+ant
++--------------------  
+
+ []
+
+ The first time you run against a configured database,
+ a table with 10000 rows will be created and populated with random data.
+   
+ [Pool] To run the pool tests:
+
+ [[1]] Edit the configuration in src/pool/config-pool.xml
+
+ [[2]] Edit src/pool/logging.properties to provide a real path for the log file
+ 
+ [[3]] Specify the path to pool jar you want to test with in src/pool/build.properties
+
+ [[4]] From src/pool, execute:
+
++--------------------
+ant
++--------------------
+ 
+ []
+ 
+ [http] To run the http tests:
+
+ [[1]] Edit the configuration in src/http/config-http.xml
+
+ [[2]] Edit src/http/logging.properties to provide a real path for the log file
+
+ [[3]] from src/http, execute:
+
++--------------------
+ant
++--------------------
+ 
+ []
+
+{Configuration}
+
+ Base configuration for all microbenchmark implementations using Commons
+ Performance is included in the "run" section of the XML configuration file.
+ The base parameters determine how many request threads are spawned, how many
+ iterations each performs and how inter-arrival times (times between requests
+ from each thread) are computed. A minimal configuration file would contain
+ only the "run" element nested in the "configuration" root element.
+ Configurations for the DBCP and Pool tests include additional parameters
+ specified in other elements. 
+
+* Base Configuration
+
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|<<XML path to parameter>> |<<What the parameter means>> |<<Sample setting>>|           
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/run/iterations|Number of iterations for each client thread      |100 - each thread executes 100 requests.|
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/run/clients   | Number of ClientThreads                         |10 - 10 client threads run concurrently |   
+*-----------------------------+-------------------------------------------------+----------------------------------------+  
+|configuration/run/delay-min | Minimum time between client requests per thread | 250 - peak load is 4 client requests per thread per second|  
+*-----------------------------+-------------------------------------------------+----------------------------------------+   
+|configuration/run/delay-max| Maximum time between client requests per thread |500 - minimum load is 2 requests per client per second |      
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/run/sigma     |Standard deviation of inter-arrival times (only used when delayType is "random" | 10 standard deviation of inter-arrival times is 10ms.|
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/run/delay-type | Whether inter-arrival times are random or deterministic. "constant" means deterministic, "gaussian" or "poisson" means random, following the given distribution, with mean determined by rampup or cycle state | "constant" - if cycle-type is "none", clients will fire requests at a constant rate of one request every min-delay ms (after ramping up if rampTime is positive. |
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/run/ramp-type | "linear" means that load ramps up or down linearly, "random" means it takes random jumps in the direction determined by cycle state | "linear" - if cycle-type is "none" and delay-type is constant, clients will ramp up linearly to delay-min interarrival times and then fire requests at a constant rate of one request every min-delay ms. |
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/run/ramp-period | The amount of time (in milliseconds) that a client spends ramping up or down| 10000 - client threads take 10 seconds to ramp up from delay-min at the beginning of the run and if the cycle-type is "oscillating," the same amount of time to ramp back down to delay-max after sustaining peak load for peak-period |
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/run/peak-period | The amount of time (in milliseconds) that a client spends at peak load (only used if cycle-type is "oscillating"| 20000 - client threads sustain peak load (one request per delay-min milliseconds) for 20 seconds each cycle|
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/run/trough-period | The amount of time (in milliseconds) that a client spends at minimum load (only used if cycle-type is "oscillating"| 10000 - client threads stay at minimum load (one request per delay-max milliseconds) for 20 seconds each cycle|
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/run/cycle-type | "oscillating" means that load follows a cycle, starting at delay-max, ramping up to delay-min over ramp-period, staying at peak load for peak-period, then ramping down again over ramp-period, staying at delay-max for trough-period, and then repeating | "none" - clients ramp up at the beginning of the run to delay-min and stay at that level throughout the run|
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+
+* Pool configuration (used by both Pool and DBCP)
+
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|<<XML path to parameter>> |<<What the parameter means>> |<<Sample setting>>|           
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/pool/type|Type of pool to use|GenericObjectPool - use a GenericObjectPool as the underlying object pool.  The only alternative currently is "AbandonedObjectPool"|
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/pool/max-active|The commons pool maxActive setting - the maximum number of object instances that can be checked out from the pool at a given time|10 - at most 10 object instances can be in use by clients at a given time|
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/pool/max-idle|The commons pool maxIdle setting - the maximum number of object instances that can be idle in the pool at a given time|5 - at most 5 object instances can be sitting idle in the pool at a given time|
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/pool/min-idle|The commons pool minIdle setting - the minumum number of object instances that must be available (idle) in the pool at a given time|4 - there must always be 4 idle object instances waiting for clients in the pool|
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/pool/max-wait|The commons pool maxWait setting - the maximum amount of time (in milliseconds) that a client will wait for an instance to become available in the pool before throwing an exception. This parameter is only relevant when exhausted-action is "block"|-1 - a negative value means wait indefinitely|
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/pool/exhausted-action|The commons pool exhaustedAction setting - determines what the pool does when it gets a request for an object instance and there are no idle instances available.  Must be one of "block" (client waits) "fail" (throw exception) or "grow" (create a new object instance) |block - client will wait until an instance becomes available or max-wait is exceeded|
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/pool/test-on-borrow|The commons pool testOnBorrow setting - determines whether or not the pool invokes the object factory's validate method on object instances borrowed from the pool before giving them out to clients.  Must be either "true" or "false" |false - object instances are not validated when they are borrowed from the pool|
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/pool/test-on-return|The commons pool testOnReturn setting - determines whether or not the pool invokes the object factory's validate method on object instances when they are returned to the pool.  Must be either "true" or "false" |true - object instances are validated before being returned to the pool.|
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/pool/time-between-evictions|The commons pool timeBetweenEvictions setting - the amount of time (in milliseconds) between runs of the idle object evictor.  A negative value disables idle object eviction. |30000 - the idle object evictor runs every 30 seconds|
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/pool/tests-per-eviction|The commons pool testsPerEviction setting - the number of objects in the pool checked for expiry on each evictor run|10 - the evictor will examine up to 10 objects in the pool on each eviction run|
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/pool/idle-timeout|The commons pool idleTimeout setting - the amount of time that an instance can remain idle in the pool before becoming eligible for eviction. A negative value means instances do not expire. |20000 - instances become eligible for eviction when they have been sitting idle in the pool for more than 20 seconds|
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/pool/test-while-idle|The commons pool testWhileIdle setting - determines whether or not the idle object evictor validates objects that it examines during its runs.  Must be "true" or "false" |true - each time the idle object evictor runs, it invokes the factory validate method on the idle objects that it examines during the run|
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/abandoned-config/log-abandoned|Determines whether or not abandoned object discovery events are logged. Only meaningful if pool type is AbandonedObjectPool.  Must be "true" or "false"|true - each time an abandoned object is found, a stack trace showing its origin is logged|
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/abandoned-config/remove-abandoned|Determines whether or not abandoned objects are removed when found. Only meaningful if pool type is AbandonedObjectPool.  Must be "true" or "false"|false - abandoned objects are not removed|
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/abandoned-config/abandoned-timeout|Inactivity timeout used to determine when an object is deemed to be abandoned.|50000 - objects not used for more than 50 seconds are considered abandoned.|
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+
+* Additional configuration for DBCP
+
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|<<XML path to parameter>> |<<What the parameter means>> |<<Sample setting>>|           
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/database/driver|The fully qualified class name of the jdbc driver to use.  Must be available in the classpath.|com.mysql.jdbc.Driver - use mysql jdbc driver|
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/database/url|The jdbc connection url|jdbc:mysql:///test - use the test mysql database on the local host|
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/database/username|The jdbc connection username|sa - all connections are created using "sa" database login id|
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/database/password|The jdbc connection password|'' (empty element) - no password|
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/database/query-type|The type of query used by the tests.  Admissable values are "integerIndexed," "integerScan," "textScan" or "no-op".  The value "no-op" means that no SQL operation will be performed on connections retrieved from the pool; otherwise, the first part is the type of column used in the SELECT statement and the second determines whether or not the column is indexed|integerScan - generate queries that select on values from a non-indexed integer column|
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/datasource-type|The type of the datasource to use, either "BasicDataSource" or "PoolingDatasource"|BasicDataSource - instantiate and use a BasicDataSource as source of connections|
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/connection-factory/type|The type of database connection factory to use. Admissable values are "Driver" or "DriverManager".|DriverManager - use DriverManagerConnectionFactory|
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/connection-factory/auto-commit|The autocommit property assigned to connections returned by the pool.  Must be "true" or "false"|true - connections are set to autocommit transactions|
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/connection-factory/read-only|The readonly property assigned to connections returned by the pool.  Must be "true" or "false"|false - connections are read/write|
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/connection-factory/validation-query|The validation query used to test connections.  Only meaningful when one of test-on-borrow, test-on-return, test-while-idle is true.|"SELECT * FROM TEST" - this query is executed to validate connections.  If it returns at least one row, validation succeeds.|
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/poolable-connection-factory/type|The PoolableConnectionFactory type.  Currently only "PoolableConnectionFactory" is supported|PoolableConnectionFactory - only valid setting|
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/poolable-connection-factory/pool-prepared-statements|Whether or not prepared statement pooling is turned on. Must be either "true" or "false"|true - prepared statements are pooled|
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/poolable-connection-factory/max-open-statements|When pool-prepared-statements is true, this setting determines the maximum number or pooled prepared statements that can be open at a given time|10 - at most 10 prepared statements can be open at the same time|
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+
+* Configuration for http
+
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|<<XML path to parameter>> |<<What the parameter means>> |<<Sample setting>>|           
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/http/url|url of resource to test|http://localhost/index.html|
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/http/method|http method -GET or POST|GET|
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/http/socket-timeout|http socket connection timeout in milliseconds|20000 - timeout after 20 seconds|
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+|configuration/http/success-key|string to look for in http response indicating success|'successful' - threads throw HttpException if this string is not found in the response|
+*-----------------------------+-------------------------------------------------+----------------------------------------+
+
+{Statistics}
+ 
+ Runs consist of client threads submitting requests in a loop, with configurable
+ delays in between.  Statistics on latency of the core request operation are
+ gathered by thread and overall.  The "number of misses" reported per thread
+ is the number of times that the request operation itself took longer than the 
+ presribed interarrival time for the thread (e.g. the thread is supposed to send
+ one request each 100ms, but it has to wait 150ms for a response). If the number
+ of misses is a significant percentage of the number of iterations, you should
+ consider increasing the number of service nodes (pool maxActive) or decreasing
+ the delay-min / delay-max.
+
+{Development tasks}
+
+ [[]] Property representation and management is poor. Configuration objects
+      should be defined and Digester should create and populate configuration
+      beans.
+
+ [[]] More pool types and more datasource / connection pool types should be
+      supported.
+
+ [[]] WaiterFactory should support stochastic latencies for lifecycle methods
+      similar to ClientThread.nextDelay. Probably nextDelay belongs in a
+      separate latency generation class. 
+
+ [[]] TESTS!!! Need more tests.
+
+ []
+

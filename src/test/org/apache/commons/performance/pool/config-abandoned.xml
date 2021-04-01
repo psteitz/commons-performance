@@ -1,0 +1,80 @@
+<!--
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+ -->
+
+<configuration>
+  
+  <factory>
+    <activate-latency>0</activate-latency>
+    <destroy-latency>0</destroy-latency>
+    <make-latency>100</make-latency>
+    <passivate-latency>0</passivate-latency>
+    <validate-latency>100</validate-latency>
+    <waiter-latency>0</waiter-latency>
+    <passivate-invalidation-probability>0</passivate-invalidation-probability>
+  </factory>
+  
+  <pool>
+    <!-- GenericObjectPool or AbandonedObjectPool -->
+    <type>AbandonedObjectPool</type>
+    <max-active>15</max-active>
+    <max-idle>-1</max-idle>
+    <min-idle>0</min-idle>
+    <max-wait>-1</max-wait>
+    <!-- block, fail, or grow -->
+    <exhausted-action>grow</exhausted-action>
+    <test-on-borrow>true</test-on-borrow>
+    <test-on-return>false</test-on-return>
+    <time-between-evictions>-1</time-between-evictions>
+    <tests-per-eviction>3</tests-per-eviction>
+    <idle-timeout>-1</idle-timeout>
+    <test-while-idle>true</test-while-idle>
+    <lifo>false</lifo>
+    <!-- Ignored unless pool type a KeyedObjectPool -->
+    <max-active-per-key>10</max-active-per-key>
+    <sampling-rate>0.1</sampling-rate>
+  </pool>
+  
+  <!-- Ignored unless pool type is AbandonedObjectPool -->
+  <abandoned-config>
+    <log-abandoned>true</log-abandoned>
+    <remove-abandoned>false</remove-abandoned>
+    <abandoned-timeout>50000</abandoned-timeout>
+  </abandoned-config>
+  
+  <run>
+    <!-- integerIndexed, integerScan, or textScan -->
+    <iterations>100</iterations>
+    <clients>50</clients>
+    <delay-min>250</delay-min>
+    <delay-max>500</delay-max>
+    <delay-sigma>50</delay-sigma>
+    <!-- constant, gaussian, or poisson -->
+    <delay-type>gaussian</delay-type>
+    <!-- none, linear, random --> 
+    <ramp-type>random</ramp-type>
+    <ramp-period>5000</ramp-period>
+    <peak-period>2000</peak-period>
+    <trough-period>5000</trough-period>
+    <!-- none, oscillating (others?)-->
+    <cycle-type>oscillating</cycle-type>
+  </run>
+  
+</configuration>

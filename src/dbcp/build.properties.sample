@@ -1,0 +1,39 @@
+###############################################################################
+#
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+###############################################################################
+
+# Remote maven repository (used to download dependencies not provided below)
+mavenRepo=http://repo1.maven.org/maven2
+
+# Local maven repo (not needed if full paths are provided below)
+localMavenRepo=${user.home}/.m2/repository
+
+# JDBC driver
+# Uncomment to use a real mysql database
+#jdbc-jar=${localMavenRepo}/mysql/mysql-connector-java/5.0.2/mysql-connector-java-5.0.2.jar
+# DBCP mocks - no real database access or latency.  Build from source using "ant mock-jar" from DBCP trunk.
+jdbc-jar=./commons-dbcp2-2.0-mocks.jar
+
+
+# Replace with full path to versions of pool, dbcp jars you want to test with
+pool-jar=${localMavenRepo}/commons-pool/commons-pool/1.5.6/commons-pool-1.5.6.jar
+dbcp-jar=${localMavenRepo}/commons-dbcp/commons-dbcp/1.4/commons-dbcp-1.4.jar
+pool2-jar=${localMavenRepo}/org/apache/commons/commons-pool2/2.2/commons-pool2-2.2.jar
+dbcp2-jar=${localMavenRepo}/org/apache/commons/commons-dbcp2/2.0/commons-dbcp2-2.0.jar
+tomcat-jdbc-jar=${localMavenRepo}/org/apache/tomcat/tomcat-jdbc/8.0.3/tomcat-jdbc-8.0.3.jar
+tomcat-juli-jar=${localMavenRepo}/org/apache/tomcat/tomcat-juli/8.0.3/tomcat-juli-8.0.3.jar
+

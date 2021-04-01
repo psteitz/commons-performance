@@ -1,0 +1,47 @@
+<!--
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+ -->
+
+<configuration>
+  
+  <run>
+    <!-- integerIndexed, integerScan, or textScan -->
+    <iterations>500</iterations>
+    <clients>40</clients>
+    <delay-min>200</delay-min>
+    <delay-max>500</delay-max>
+    <delay-sigma>50</delay-sigma>
+    <!-- constant, gaussian, or poisson -->
+    <delay-type>gaussian</delay-type>
+    <!-- none, linear, random --> 
+    <ramp-type>random</ramp-type>
+    <ramp-period>1000</ramp-period>
+    <peak-period>2000</peak-period>
+    <trough-period>1000</trough-period>
+    <!-- none, oscillating (others?)-->
+    <cycle-type>oscillating</cycle-type>
+  </run>
+  <http>
+  	<url>http://localhost:8080/DBTest/test.jsp</url><!--GET or POST-->
+  	<method>GET</method><!--Socket timeout in milliseconds-->
+  	<socket-timeout>20000</socket-timeout><!--String to search for in response-->
+  	<success-key>updated</success-key></http>
+
+</configuration>

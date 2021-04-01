@@ -1,0 +1,93 @@
+<!--
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+ -->
+
+<configuration>
+  <database>
+    <driver>org.apache.commons.dbcp2.TesterDriver</driver>
+    <url>jdbc:apache:commons:testdriver</url> 
+    <username>username</username>
+    <password>password</password>
+    <!-- no-op, integerIndexed, integerScan, or textScan -->
+    <query-type>integerIndexed</query-type>
+  </database>
+  
+  <!-- BasicDataSource, BasicDataSource2, PoolingDataSource or tomcat-jdbc-pool -->
+  <datasource-type>BasicDataSource2</datasource-type>
+  
+  <connection-factory>
+    <!-- DriverManager or Driver -->
+    <type>DriverManager</type> 
+    <auto-commit>true</auto-commit>
+    <read-only>false</read-only>
+    <!-- Validation query to use when testOnBorrow or testOnReturn is true -->
+    <validation-query>SELECT DUMMY FROM DUAL</validation-query>
+  </connection-factory>
+  
+  <poolable-connection-factory>
+    <!-- PoolableConnectionFactory or CPDSConnectionFactory (not yet) -->
+    <type>PoolableConnectionFactory</type> 
+    <pool-prepared-statements>true</pool-prepared-statements>
+    <max-open-statements>-1</max-open-statements>
+  </poolable-connection-factory>
+  
+  <pool>
+    <!-- GenericObjectPool or AbandonedObjectPool -->
+    <type>GenericObjectPool</type>
+    <max-active>15</max-active>
+    <max-idle>15</max-idle>
+    <min-idle>3</min-idle>
+    <max-wait>2000</max-wait>
+    <!-- block, fail, or grow -->
+    <exhausted-action>block</exhausted-action>
+    <test-on-borrow>true</test-on-borrow>
+    <test-on-return>false</test-on-return>
+    <time-between-evictions>-1</time-between-evictions>
+    <tests-per-eviction>3</tests-per-eviction>
+    <idle-timeout>-1</idle-timeout>
+    <test-while-idle>false</test-while-idle>
+    <sampling-rate>0.1</sampling-rate>
+  </pool>
+  
+  <!-- Ignored unless pool type is AbandonedObjectPool -->
+  <abandoned-config>
+    <log-abandoned>true</log-abandoned>
+    <remove-abandoned>true</remove-abandoned>
+    <abandoned-timeout>50000</abandoned-timeout>
+  </abandoned-config>
+  
+  <run>
+    <iterations>1000</iterations>
+    <clients>50</clients>
+    <delay-min>50</delay-min>
+    <delay-max>1000</delay-max>
+    <delay-sigma>50</delay-sigma>
+    <!-- constant, gaussian, or poisson -->
+    <delay-type>constant</delay-type>
+    <!-- none, linear, random --> 
+    <ramp-type>linear</ramp-type>
+    <ramp-period>5000</ramp-period>
+    <peak-period>3000</peak-period>
+    <trough-period>3000</trough-period>
+    <!-- none, oscillating (others?)-->
+    <cycle-type>oscillating</cycle-type>
+  </run>
+  
+</configuration>
